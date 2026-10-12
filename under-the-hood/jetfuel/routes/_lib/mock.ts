@@ -17,6 +17,26 @@ export const MOCK_INFO_INELIGIBLE: ReportInfo = {
 	],
 };
 
+export const MOCK_INFO_CURRENT: ReportInfo = {
+	...MOCK_INFO,
+	servedPeriod: "August 2026",
+	targetPeriod: "August 2026",
+	periodStatus: "current",
+	nextReportNotBefore: "2026-10-10",
+};
+
+export const MOCK_INFO_DATA_PENDING: ReportInfo = {
+	...MOCK_INFO_CURRENT,
+	targetPeriod: "September 2026",
+	periodStatus: "data_pending",
+};
+
+export const MOCK_INFO_CAPPED: ReportInfo = {
+	...MOCK_INFO_CURRENT,
+	targetPeriod: "September 2026",
+	periodStatus: "capped",
+};
+
 export const MOCK_NOTE: TimelineRichTextFragment = {
 	__typename: "TimelineRichText",
 	text: "This is a placeholder introductory note, and you can see how links look.",
@@ -72,4 +92,29 @@ export const MOCK_LABELED: Report = {
 			percentageOfDays: "16.12%",
 		},
 	],
+};
+
+export const MOCK_CURRENT: Report = {
+	...MOCK_EMPTY,
+	periodStatus: { served: "August 2026", target: "August 2026", status: "current", nextReportNotBefore: "2026-10-10" },
+};
+
+export const MOCK_DATA_PENDING: Report = {
+	...MOCK_CURRENT,
+	periodStatus: { served: "August 2026", target: "September 2026", status: "data_pending", nextReportNotBefore: "2026-10-10" },
+};
+
+export const MOCK_CAPPED: Report = {
+	...MOCK_CURRENT,
+	periodStatus: { served: "August 2026", target: "September 2026", status: "capped", nextReportNotBefore: "2026-10-10" },
+};
+
+export const MOCK_NOTE_CURRENT: TimelineRichTextFragment = {
+	...MOCK_NOTE,
+	text: MOCK_NOTE.text + " Next report no earlier than 2026-10-10 UTC.",
+};
+
+export const MOCK_NOTE_DELAYED: TimelineRichTextFragment = {
+	...MOCK_NOTE,
+	text: MOCK_NOTE.text + " September 2026 is not available yet; showing August 2026. Next report no earlier than 2026-10-10 UTC.",
 };
