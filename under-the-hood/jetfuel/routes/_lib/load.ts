@@ -13,8 +13,6 @@ import {
 	MOCK_INFO_INELIGIBLE,
 	MOCK_LABELED,
 	MOCK_NOTE,
-	MOCK_NOTE_CURRENT,
-	MOCK_NOTE_DELAYED,
 } from "./mock";
 import { parseReport, type Report, type ReportInfo } from "./report";
 
@@ -31,15 +29,15 @@ const MOCKS: Record<Mock, ReportState> = {
 	ineligible: { status: "ok", info: MOCK_INFO_INELIGIBLE, report: undefined, rawJson: undefined, note: undefined },
 	empty: { status: "ok", info: MOCK_INFO, report: MOCK_EMPTY, rawJson: JSON.stringify(MOCK_EMPTY, null, 2), note: MOCK_NOTE },
 	labels: { status: "ok", info: MOCK_INFO, report: MOCK_LABELED, rawJson: JSON.stringify(MOCK_LABELED, null, 2), note: MOCK_NOTE },
-	current: { status: "ok", info: MOCK_INFO_CURRENT, report: MOCK_CURRENT, rawJson: JSON.stringify(MOCK_CURRENT, null, 2), note: MOCK_NOTE_CURRENT },
+	current: { status: "ok", info: MOCK_INFO_CURRENT, report: MOCK_CURRENT, rawJson: JSON.stringify(MOCK_CURRENT, null, 2), note: MOCK_NOTE },
 	data_pending: {
 		status: "ok",
 		info: MOCK_INFO_DATA_PENDING,
 		report: MOCK_DATA_PENDING,
 		rawJson: JSON.stringify(MOCK_DATA_PENDING, null, 2),
-		note: MOCK_NOTE_DELAYED,
+		note: MOCK_NOTE,
 	},
-	capped: { status: "ok", info: MOCK_INFO_CAPPED, report: MOCK_CAPPED, rawJson: JSON.stringify(MOCK_CAPPED, null, 2), note: MOCK_NOTE_DELAYED },
+	capped: { status: "ok", info: MOCK_INFO_CAPPED, report: MOCK_CAPPED, rawJson: JSON.stringify(MOCK_CAPPED, null, 2), note: MOCK_NOTE },
 };
 
 export const canMock = (ctx: Context): boolean => !isProd || ctx.isDogfood;

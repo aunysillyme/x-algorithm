@@ -108,13 +108,3 @@ export const MOCK_CAPPED: Report = {
 	...MOCK_CURRENT,
 	periodStatus: { served: "August 2026", target: "September 2026", status: "capped", nextReportNotBefore: "2026-10-10" },
 };
-
-export const MOCK_NOTE_CURRENT: TimelineRichTextFragment = {
-	...MOCK_NOTE,
-	text: MOCK_NOTE.text + " Next report no earlier than 2026-10-10 UTC.",
-};
-
-export const MOCK_NOTE_DELAYED: TimelineRichTextFragment = {
-	...MOCK_NOTE,
-	text: MOCK_NOTE.text + " September 2026 is not available yet; showing August 2026. Next report no earlier than 2026-10-10 UTC.",
-};
