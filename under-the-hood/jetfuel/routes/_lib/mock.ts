@@ -4,7 +4,7 @@ import type { Report, ReportInfo } from "./report";
 export const MOCK_INFO: ReportInfo = {
 	reportPeriod: "August 2026",
 	eligibilityChecks: [
-		{ key: "10 or more posts in the prior month", value: true },
+		{ key: "10 or more posts in the report month", value: true },
 		{ key: "Account at least 1 year old", value: true },
 	],
 };
@@ -12,7 +12,7 @@ export const MOCK_INFO: ReportInfo = {
 export const MOCK_INFO_INELIGIBLE: ReportInfo = {
 	reportPeriod: "August 2026",
 	eligibilityChecks: [
-		{ key: "10 or more posts in the prior month", value: false },
+		{ key: "10 or more posts in the report month", value: false },
 		{ key: "Account at least 1 year old", value: true },
 	],
 };

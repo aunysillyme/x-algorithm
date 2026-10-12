@@ -18,7 +18,7 @@ val metadataUserId = -1L
 val minimumAccountAge = 365.days
 val minimumEligiblePosts = 10L
 val minDaysAfterMonthEnd = 10
-val postsCheckLabel = "10 or more posts in the prior month"
+val postsCheckLabel = "10 or more posts in the report month"
 val ageCheckLabel = "Account at least 1 year old"
 val englishMonthNames = Seq(
   "January",

@@ -13,7 +13,7 @@ const T = t.Object({
 const copy = {
 	title: l("Under the hood", "Title of the Under the hood page, where a user sees which safety labels affected their posts' reach."),
 	description: l(
-		"See aggregate stats on labels that can affect post visibility in the X algorithm, for your posts and account last month.",
+		"See aggregate stats on labels that can affect post visibility in the X algorithm, for your posts and account over the most recent available month.",
 		"Description on the Under the hood page explaining what the report contains.",
 	),
 	openSource: l(
