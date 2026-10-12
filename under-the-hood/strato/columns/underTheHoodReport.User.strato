@@ -355,7 +355,7 @@ def buildReportJson(
     .map { days => sumDayCounts(Some(days)) }
     .getOrElse(0L)
   val noteSuffix = periodStatusNote(periodStatus)
-  val notes = if (periodStatus.nonEmpty) { reportNote(noteSuffix).text } else { reportNoteString }
+  val notes = reportNoteString + noteSuffix
   val period = {
     startDate = periodStartDate(monthBucket),
     endDate = periodEndDate(monthBucket),
@@ -596,7 +596,7 @@ val fetchOp = Op.fetch[Key, View, Value] { ctx =>
                 postsCheckLabel -> false,
                 ageCheckLabel -> ageOk,
               )),
-              note = Some(reportNote(noteSuffix)),
+              note = Some(reportNote("")),
               servedPeriod = periodStatus.map { status => status.served },
               targetPeriod = periodStatus.map { status => status.target },
               periodStatus = periodStatus.map { status => status.status },
@@ -624,7 +624,7 @@ val fetchOp = Op.fetch[Key, View, Value] { ctx =>
         val reportInfo = {
           reportPeriod = Some(reportPeriodLabel(monthBucket)),
           eligibilityChecks = Some(eligibilityChecks),
-          note = Some(reportNote(noteSuffix)),
+          note = Some(reportNote("")),
           servedPeriod = periodStatus.map { status => status.served },
           targetPeriod = periodStatus.map { status => status.target },
           periodStatus = periodStatus.map { status => status.status },
