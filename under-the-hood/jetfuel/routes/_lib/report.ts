@@ -102,4 +102,5 @@ export type ReportInfo = {
 	targetPeriod?: string;
 	periodStatus?: string;
 	nextReportNotBefore?: string;
+	availableMonths?: number[];
 };

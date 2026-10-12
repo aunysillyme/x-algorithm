@@ -11,6 +11,7 @@ struct UnderTheHoodReportInfo {
   5: optional string targetPeriod
   6: optional string periodStatus
   7: optional string nextReportNotBefore
+  8: optional list<i32> availableMonths
 } (strato.graphql.typename = "UnderTheHoodReportInfo")
 
 struct UnderTheHoodReport {

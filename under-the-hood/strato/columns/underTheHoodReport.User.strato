@@ -3,7 +3,7 @@ import <visibility/under-the-hood/underTheHoodLabels>
 import <visibility/under-the-hood/params>
 
 type Key = Long
-type View = Unit
+type View = { month: Option[Int] }
 type Value = com.twitter.strato.graphql.UnderTheHoodReport
 
 type UthUserMonthAggregate = com.twitter.visibility.under_the_hood.UthUserMonthAggregate
@@ -139,6 +139,30 @@ def monthBucketAfter(monthBucket: Int): Int = {
   }
 }
 
+def monthIndex(monthBucket: Int): Int =
+  (monthBucket / 100) * 12 + (monthBucket % 100) - 1
+
+def isValidMonthBucket(monthBucket: Int): Boolean =
+  monthBucket >= 101 && monthBucket <= 999912 &&
+    monthBucket % 100 >= 1 && monthBucket % 100 <= 12
+
+def requestedMonthAllowed(requestedMonth: Int, defaultMonth: Int, historyMonths: Int): Boolean =
+  historyMonths > 0 && isValidMonthBucket(requestedMonth) &&
+    requestedMonth <= defaultMonth && monthIndex(defaultMonth) - monthIndex(requestedMonth) <= historyMonths
+
+def availableHistoryMonths(defaultMonth: Int, historyMonths: Int): Seq[Int] = {
+  val earlierMonths = monthIndex(defaultMonth) - monthIndex(101)
+  val count = if (historyMonths < earlierMonths) { historyMonths } else { earlierMonths }
+  if (count <= 0) {
+    Seq.empty[Int]
+  } else {
+    Seq.range(0, count).map { offset =>
+      val index = monthIndex(defaultMonth) - offset - 1
+      (index / 12) * 100 + (index % 12) + 1
+    }
+  }
+}
+
 def calendarMonthBefore(now: Time.T): Int =
   monthBucketBefore(utcYyyyMm.format(now).toInt)
 
@@ -194,7 +218,9 @@ def nextReportNotBefore(monthBucket: Int): String =
 def periodStatusNote(periodStatus: Option[PeriodStatus]): String =
   periodStatus.map { status =>
     val availability =
-      if (status.status == "current") {
+      if (status.status == "historical") {
+        "Showing historical report for " + status.served + ". "
+      } else if (status.status == "current") {
         ""
       } else {
         status.target + " is not available yet; showing " + status.served + ". "
@@ -546,15 +572,26 @@ val fetchOp = Op.fetch[Key, View, Value] { ctx =>
     #<visibility/under-the-hood/mh/userMonthAggregates>.fetch(primaryUserKey, ()).v
 
   val usePrimary = monthDataReady(primaryMonth, primaryMeta, primaryUser)
-  val monthBucket =
+  val defaultMonth =
     if (usePrimary) { primaryMonth } else { monthBucketBefore(primaryMonth) }
+  val historyMonths = params.underTheHoodReportHistoryMonths()
+  val requestedMonth = ctx.view.month
+  val requestAllowed = requestedMonth.map { month =>
+    requestedMonthAllowed(month, defaultMonth, historyMonths)
+  }.getOrElse(true)
+  if (!requestAllowed) {
+    Ok.missing
+  } else {
+  val monthBucket = requestedMonth.getOrElse(defaultMonth)
+  val availableMonths = availableHistoryMonths(defaultMonth, historyMonths)
   val periodStatus: Option[PeriodStatus] =
     if (params.underTheHoodReportStatusEnabled()) {
       Some({
         served = reportPeriodLabel(monthBucket),
         target = reportPeriodLabel(calendarTargetMonth),
         status =
-          if (monthBucket == calendarTargetMonth) { "current" }
+          if (monthBucket != defaultMonth) { "historical" }
+          else if (monthBucket == calendarTargetMonth) { "current" }
           else if (!usePrimary) { "data_pending" }
           else { "capped" },
         nextReportNotBefore = nextReportNotBefore(monthBucket),
@@ -564,14 +601,14 @@ val fetchOp = Op.fetch[Key, View, Value] { ctx =>
     }
   val noteSuffix = periodStatusNote(periodStatus)
   val monthMetaOpt =
-    if (usePrimary) {
+    if (monthBucket == primaryMonth) {
       primaryMeta
     } else {
       #<visibility/under-the-hood/mh/userMonthAggregates>
         .fetch(monthMetaKey(monthBucket), ()).v
     }
   val userMonthOpt =
-    if (usePrimary) {
+    if (monthBucket == primaryMonth) {
       primaryUser
     } else {
       val fallbackKey: UthUserMonthKey = {
@@ -601,6 +638,7 @@ val fetchOp = Op.fetch[Key, View, Value] { ctx =>
               targetPeriod = periodStatus.map { status => status.target },
               periodStatus = periodStatus.map { status => status.status },
               nextReportNotBefore = periodStatus.map { status => status.nextReportNotBefore },
+              availableMonths = Some(availableMonths),
             }
             Ok.value(Some({
               reportJson = None,
@@ -629,6 +667,7 @@ val fetchOp = Op.fetch[Key, View, Value] { ctx =>
           targetPeriod = periodStatus.map { status => status.target },
           periodStatus = periodStatus.map { status => status.status },
           nextReportNotBefore = periodStatus.map { status => status.nextReportNotBefore },
+          availableMonths = Some(availableMonths),
         }
         val generatedAtMs = generatedAtMillis(daysIncludedForTs, now.inMillis)
         val periodDays = daysInPeriod(monthBucket, daysIncludedForTs)
@@ -643,6 +682,7 @@ val fetchOp = Op.fetch[Key, View, Value] { ctx =>
           reportInfo = Some(reportInfo),
         }))
       }
+  }
   }
   }
 }

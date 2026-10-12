@@ -4,9 +4,10 @@ import { FormatText } from "../../logged_out/components/richtext";
 import { pillSurface, textPrimary, textSecondary } from "../../../ui/themes";
 import { canMock, loadReport, type ReportState } from "./_lib/load";
 import type { EligibilityCheck } from "./_lib/report";
-import { Body, Divider, OPEN_SOURCE_URL, REPORT_PATH, ReportStatus, Screen, downloadUrl, pilotCopy } from "./_lib/ui";
+import { Body, Divider, OPEN_SOURCE_URL, REPORT_PATH, ReportStatus, Screen, MonthSelector, downloadUrl, reportUrl, pilotCopy } from "./_lib/ui";
 
 const T = t.Object({
+	month: t.Optional(t.String()),
 	mock: t.Optional(
 		t.Union([
 			t.Literal("none"),
@@ -17,6 +18,8 @@ const T = t.Object({
 			t.Literal("current"),
 			t.Literal("data_pending"),
 			t.Literal("capped"),
+			t.Literal("historical"),
+			t.Literal("out_of_range"),
 		]),
 	),
 });
@@ -54,7 +57,7 @@ const Check = ({ check }: { check: EligibilityCheck }) => (
 	</View>
 );
 
-const eligible = (state: ReportState, reportPath: string, download: string | undefined): JetElement => {
+const eligible = (state: ReportState, reportPath: string, download: string | undefined, month?: string, mock?: string): JetElement => {
 	if (state.status === "pilot") return <Body t={pilotCopy} />;
 	if (state.status === "unavailable") return <Body t={copy.unavailable} />;
 	const { info, report } = state;
@@ -63,6 +66,7 @@ const eligible = (state: ReportState, reportPath: string, download: string | und
 			<Divider />
 			{info.reportPeriod ? <Body t={copy.period(info.reportPeriod)} /> : null}
 			<ReportStatus info={info} />
+			<MonthSelector info={info} path="/under_the_hood" month={month} mock={mock} />
 			<Body t={copy.requirements} />
 			<View mod="flex-col gap-3">
 				{info.eligibilityChecks.map((check) => (
@@ -92,8 +96,8 @@ const eligible = (state: ReportState, reportPath: string, download: string | und
 export default page("logged_in.under_the_hood", T, async (ctx) => {
 	const fs = await ctx.switches();
 	const mock = canMock(ctx) ? ctx.mock : undefined;
-	const state: ReportState = fs.isTrue("rweb_under_the_hood_report_enabled") ? await loadReport(ctx, mock) : { status: "pilot" };
-	const reportPath = mock ? `${REPORT_PATH}?mock=${mock}` : REPORT_PATH;
+	const state: ReportState = fs.isTrue("rweb_under_the_hood_report_enabled") ? await loadReport(ctx, mock, undefined, ctx.month) : { status: "pilot" };
+	const reportPath = reportUrl(REPORT_PATH, ctx.month, mock);
 	return (
 		<Screen title={copy.title} page="under_the_hood">
 			<View mod={`${pillSurface} w-12 h-12 rounded-xl items-center justify-center`}>
@@ -111,7 +115,7 @@ export default page("logged_in.under_the_hood", T, async (ctx) => {
 					}}
 				/>
 			)}
-			{eligible(state, reportPath, state.status === "ok" && state.rawJson ? downloadUrl(ctx) : undefined)}
+			{eligible(state, reportPath, state.status === "ok" && state.rawJson ? downloadUrl(ctx, ctx.month) : undefined, ctx.month, mock)}
 		</Screen>
 	);
 });

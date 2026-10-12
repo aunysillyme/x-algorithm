@@ -5,9 +5,10 @@ import { cardSurface, textPrimary, textSecondary } from "../../../ui/themes";
 import { TimelineRichText } from "../events/components/TimelineRichText";
 import { canMock, loadReport, type Mock } from "./_lib/load";
 import type { AccountLabel, PostLabel, Report, ReportInfo } from "./_lib/report";
-import { Body, Divider, ReportStatus, Screen, downloadUrl, pilotCopy } from "./_lib/ui";
+import { Body, Divider, ReportStatus, Screen, MonthSelector, downloadUrl, pilotCopy } from "./_lib/ui";
 
 const T = t.Object({
+	month: t.Optional(t.String()),
 	mock: t.Optional(
 		t.Union([
 			t.Literal("none"),
@@ -18,6 +19,8 @@ const T = t.Object({
 			t.Literal("current"),
 			t.Literal("data_pending"),
 			t.Literal("capped"),
+			t.Literal("historical"),
+			t.Literal("out_of_range"),
 		]),
 	),
 });
@@ -209,15 +212,16 @@ const body = (report: Report, info: ReportInfo, download: string | undefined, no
 export default page("logged_in.under_the_hood.report", T, async (ctx) => {
 	const fs = await ctx.switches();
 	const mock: Mock | undefined = canMock(ctx) ? ctx.mock : undefined;
-	const state = fs.isTrue("rweb_under_the_hood_report_enabled") ? await loadReport(ctx, mock) : { status: "pilot" as const };
+	const state = fs.isTrue("rweb_under_the_hood_report_enabled") ? await loadReport(ctx, mock, undefined, ctx.month) : { status: "pilot" as const };
 	const content =
 		state.status === "ok" && state.report ? (
-			body(state.report, state.info, state.rawJson ? downloadUrl(ctx) : undefined, state.note)
+			body(state.report, state.info, state.rawJson ? downloadUrl(ctx, ctx.month) : undefined, state.note)
 		) : (
 			<Body t={state.status === "pilot" ? pilotCopy : copy.unavailable} />
 		);
 	return (
 		<Screen title={copy.title} page="under_the_hood_report">
+			{state.status === "ok" ? <MonthSelector info={state.info} path="/under_the_hood/report" month={ctx.month} mock={mock} /> : null}
 			{content}
 		</Screen>
 	);
