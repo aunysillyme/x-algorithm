@@ -31,7 +31,7 @@ export const MonthSelector = ({ info, path, month, mock }: { info: ReportInfo; p
 			<Body t={l("Report month", "Introduces the available historical months for an Under the hood report.")} />
 			<View mod="flex-row flex-wrap gap-3">
 				<Nav to={reportUrl(path, undefined, mock)} mod="hover:opacity-80">
-					<Text t={l("Latest report", "Returns to the latest available Under the hood report.")} mod={`${textPrimary} text-sm underline`} />
+					<Text t={l("Latest report", "Returns to the latest available Under the hood report.")} mod={`${textPrimary} text-sm ${month === undefined ? "font-bold" : "underline"}`} />
 				</Nav>
 				{info.availableMonths.map((availableMonth) => {
 					const value = String(availableMonth).padStart(6, "0");

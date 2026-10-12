@@ -150,13 +150,19 @@ def requestedMonthAllowed(requestedMonth: Int, defaultMonth: Int, historyMonths:
   historyMonths > 0 && isValidMonthBucket(requestedMonth) &&
     requestedMonth <= defaultMonth && monthIndex(defaultMonth) - monthIndex(requestedMonth) <= historyMonths
 
+val maxHistoryMonths = 12
+val historyMonthOffsets = Seq(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+
+def clampHistoryMonths(historyMonths: Int): Int =
+  if (historyMonths > maxHistoryMonths) { maxHistoryMonths } else { historyMonths }
+
 def availableHistoryMonths(defaultMonth: Int, historyMonths: Int): Seq[Int] = {
   val earlierMonths = monthIndex(defaultMonth) - monthIndex(101)
   val count = if (historyMonths < earlierMonths) { historyMonths } else { earlierMonths }
   if (count <= 0) {
     Seq.empty[Int]
   } else {
-    Seq.range(0, count).map { offset =>
+    historyMonthOffsets.filter { offset => offset < count }.map { offset =>
       val index = monthIndex(defaultMonth) - offset - 1
       (index / 12) * 100 + (index % 12) + 1
     }
@@ -217,15 +223,17 @@ def nextReportNotBefore(monthBucket: Int): String =
 
 def periodStatusNote(periodStatus: Option[PeriodStatus]): String =
   periodStatus.map { status =>
-    val availability =
-      if (status.status == "historical") {
-        "Showing historical report for " + status.served + ". "
-      } else if (status.status == "current") {
-        ""
-      } else {
-        status.target + " is not available yet; showing " + status.served + ". "
-      }
-    " " + availability + "Next report no earlier than " + status.nextReportNotBefore + " UTC."
+    if (status.status == "historical") {
+      " Showing historical report for " + status.served + "."
+    } else {
+      val availability =
+        if (status.status == "current") {
+          ""
+        } else {
+          status.target + " is not available yet; showing " + status.served + ". "
+        }
+      " " + availability + "Next report no earlier than " + status.nextReportNotBefore + " UTC."
+    }
   }.getOrElse("")
 
 def calendarDaysInMonthBucket(monthBucket: Int): Int = {
@@ -574,7 +582,7 @@ val fetchOp = Op.fetch[Key, View, Value] { ctx =>
   val usePrimary = monthDataReady(primaryMonth, primaryMeta, primaryUser)
   val defaultMonth =
     if (usePrimary) { primaryMonth } else { monthBucketBefore(primaryMonth) }
-  val historyMonths = params.underTheHoodReportHistoryMonths()
+  val historyMonths = clampHistoryMonths(params.underTheHoodReportHistoryMonths())
   val requestedMonth = ctx.view.month
   val requestAllowed = requestedMonth.map { month =>
     requestedMonthAllowed(month, defaultMonth, historyMonths)
@@ -638,7 +646,7 @@ val fetchOp = Op.fetch[Key, View, Value] { ctx =>
               targetPeriod = periodStatus.map { status => status.target },
               periodStatus = periodStatus.map { status => status.status },
               nextReportNotBefore = periodStatus.map { status => status.nextReportNotBefore },
-              availableMonths = Some(availableMonths),
+              availableMonths = if (availableMonths.isEmpty) { None : Option[Seq[Int]] } else { Some(availableMonths) },
             }
             Ok.value(Some({
               reportJson = None,
@@ -667,7 +675,7 @@ val fetchOp = Op.fetch[Key, View, Value] { ctx =>
           targetPeriod = periodStatus.map { status => status.target },
           periodStatus = periodStatus.map { status => status.status },
           nextReportNotBefore = periodStatus.map { status => status.nextReportNotBefore },
-          availableMonths = Some(availableMonths),
+          availableMonths = if (availableMonths.isEmpty) { None : Option[Seq[Int]] } else { Some(availableMonths) },
         }
         val generatedAtMs = generatedAtMillis(daysIncludedForTs, now.inMillis)
         val periodDays = daysInPeriod(monthBucket, daysIncludedForTs)
