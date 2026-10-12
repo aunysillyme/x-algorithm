@@ -317,8 +317,8 @@ object UthDailyPostsBackfillApp {
       }.group,
       config.reducers
     ).sum.toTypedPipe
-    val joined = counts.join(ids)
-    (if (config.reducers > 0) joined.withReducers(config.reducers) else joined).toTypedPipe.map {
+    val countsWithIds = counts.join(ids)
+    (if (config.reducers > 0) countsWithIds.withReducers(config.reducers) else countsWithIds).toTypedPipe.map {
       case ((userId, day, label, asOfDay), ((carried, removed), (postIds, postIdsTruncated))) =>
         (userId, day, label, asOfDay, carried, removed, postIds, postIdsTruncated)
     }
